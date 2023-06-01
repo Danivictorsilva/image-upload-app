@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  postgres:
+    container_name: postgres_cat_learning_integration
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      TZ: GMT
+    ports:
+      - 5433:5433
