@@ -1,0 +1,25 @@
+.container-upload-archives {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+}
+
+.view-image {
+  background-color: purple;
+  height: 480px;
+  width: 480px;
+  padding: 10px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.upload-archives {
+  background-color: green;
+  color: white;
+  font-family: sans-serif;
+  border-radius: 0.1rem;
+}
