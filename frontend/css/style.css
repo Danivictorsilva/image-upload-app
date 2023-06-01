@@ -8,18 +8,49 @@
   height: 90vh;
 }
 
-.view-image {
-  background-color: purple;
-  height: 480px;
-  width: 480px;
-  padding: 10px;
-  margin-bottom: 20px;
-  color: white;
+#picture__input {
+  display: none;
 }
 
-.upload-archives {
-  background-color: green;
-  color: white;
+.picture {
+  width: 25rem;
+  height: 25rem;
+  background: #DDD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #AAA;
+  border: 2px dashed currentcolor;
+  cursor: pointer;
   font-family: sans-serif;
-  border-radius: 0.1rem;
+  transition: color 300ms ease-in-out, background 300ms ease-in-out;
+  outline: none;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.picture:hover {
+  color: #777;
+  background: #CCC;
+}
+
+.picture:focus {
+  color: #777;
+  background: #CCC;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.picture__img {
+  max-width: 100%;
+}
+
+.btn-send-file {
+  margin: 30px 10px 10px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background: black;
+  width: 120px;
+  height: 40px;
+  border: none;
 }
