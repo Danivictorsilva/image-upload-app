@@ -15,11 +15,11 @@
 .picture {
   width: 25rem;
   height: 25rem;
-  background: #ddd;
+  background: #DDD;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #aaa;
+  color: #AAA;
   border: 2px dashed currentcolor;
   cursor: pointer;
   font-family: sans-serif;
@@ -31,15 +31,26 @@
 
 .picture:hover {
   color: #777;
-  background: #ccc;
+  background: #CCC;
 }
 
 .picture:focus {
   color: #777;
-  background: #ccc;
+  background: #CCC;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .picture__img {
   max-width: 100%;
+}
+
+.btn-send-file {
+  margin: 30px 10px 10px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background: black;
+  width: 120px;
+  height: 40px;
+  border: none;
 }
