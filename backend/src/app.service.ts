@@ -1,46 +1,73 @@
 import { Injectable } from '@nestjs/common'
-import * as azure from 'azure-storage'
-import { generateSasTokenReturn } from './contracts/types/GenerateSasTokenReturn'
+import {
+  BlobSASPermissions,
+  BlobSASSignatureValues,
+  BlobServiceClient,
+  ContainerClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+} from '@azure/storage-blob'
 import { randomUUID } from 'node:crypto'
+import * as dayjs from 'dayjs'
 
 @Injectable()
 export class AppService {
-  generateSasToken(): generateSasTokenReturn {
-    const connString = process.env.AZURE_CONN_STRING
+  async generateSasToken() {
     const containerName = process.env.CONTAINER_NAME
-    const accountName = process.env.ACCOUNT_NAME
     const blobName = this.generateBlobFilename()
-
-    const blobService = azure.createBlobService(connString)
-
-    const startDate = new Date()
-    startDate.setMinutes(startDate.getMinutes() - 5)
-    const expiryDate = new Date(startDate)
-    expiryDate.setMinutes(startDate.getMinutes() + 60)
-
-    const sharedAccessPolicy: azure.common.SharedAccessPolicy = {
-      AccessPolicy: {
-        Permissions: azure.BlobUtilities.SharedAccessPermissions.WRITE,
-        Start: startDate,
-        Expiry: expiryDate,
-      },
-    }
-
-    const sasToken = blobService.generateSharedAccessSignature(
-      containerName,
-      blobName,
-      sharedAccessPolicy,
+    const account = process.env.ACCOUNT_NAME
+    const accountKey = process.env.ACCOUNT_KEY
+    const sharedKeyCredential = new StorageSharedKeyCredential(
+      account,
+      accountKey,
     )
 
-    return {
-      container: containerName,
-      filename: blobName,
-      account: accountName,
-      sasToken: sasToken,
-    }
+    const blobServiceClient = new BlobServiceClient(
+      `https://${account}.blob.core.windows.net`,
+      sharedKeyCredential,
+    )
+
+    const containerClient = blobServiceClient.getContainerClient(containerName)
+
+    return this.getBlobSasUri(containerClient, blobName, sharedKeyCredential)
+
+    // return {
+    //   container: containerName,
+    //   filename: blobName,
+    //   account: accountName,
+    //   sasToken: sasToken,
+    // }
   }
 
-  private generateBlobFilename(): string {
+  private generateBlobFilename() {
     return randomUUID()
+  }
+
+  getBlobSasUri(
+    containerClient: ContainerClient,
+    blobName: string,
+    sharedKeyCredential: StorageSharedKeyCredential,
+    storedPolicyName?: string,
+  ) {
+    const sasOptions: BlobSASSignatureValues = {
+      containerName: containerClient.containerName,
+      blobName: blobName,
+    }
+
+    if (storedPolicyName == null) {
+      sasOptions.startsOn = new Date()
+      sasOptions.expiresOn = new Date(new Date().valueOf() + 3600 * 1000)
+      sasOptions.permissions = BlobSASPermissions.parse('w')
+    } else {
+      sasOptions.identifier = storedPolicyName
+    }
+
+    const sasToken = generateBlobSASQueryParameters(
+      sasOptions,
+      sharedKeyCredential,
+    ).toString()
+    console.log(`SAS token for blob is: ${sasToken}`)
+
+    return `${containerClient.getBlockBlobClient(blobName).url}?${sasToken}`
   }
 }

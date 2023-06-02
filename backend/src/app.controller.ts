@@ -7,7 +7,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('/api/upload/generate-sas-token')
-  getHello(): generateSasTokenReturn {
+  generateSasToken() {
     return this.appService.generateSasToken()
     // return {
     //   container: 'container',
