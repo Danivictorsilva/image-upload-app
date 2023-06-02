@@ -9,11 +9,5 @@ export class AppController {
   @Get('/api/upload/generate-sas-token')
   generateSasToken() {
     return this.appService.generateSasToken()
-    // return {
-    //   container: 'container',
-    //   filename: 'filename',
-    //   sasToken: 'sasToken',
-    //   account: 'account',
-    // }
   }
 }

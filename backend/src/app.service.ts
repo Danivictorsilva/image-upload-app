@@ -17,6 +17,7 @@ export class AppService {
     const blobName = this.generateBlobFilename()
     const account = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
+
     const sharedKeyCredential = new StorageSharedKeyCredential(
       account,
       accountKey,
@@ -29,14 +30,18 @@ export class AppService {
 
     const containerClient = blobServiceClient.getContainerClient(containerName)
 
-    return this.getBlobSasUri(containerClient, blobName, sharedKeyCredential)
+    const sasUri = this.getBlobSasUri(
+      containerClient,
+      blobName,
+      sharedKeyCredential,
+      'w',
+    )
 
-    // return {
-    //   container: containerName,
-    //   filename: blobName,
-    //   account: accountName,
-    //   sasToken: sasToken,
-    // }
+    return {
+      container: containerName,
+      filename: blobName,
+      sasuri: sasUri,
+    }
   }
 
   private generateBlobFilename() {
@@ -47,6 +52,7 @@ export class AppService {
     containerClient: ContainerClient,
     blobName: string,
     sharedKeyCredential: StorageSharedKeyCredential,
+    permissions: string,
     storedPolicyName?: string,
   ) {
     const sasOptions: BlobSASSignatureValues = {
@@ -54,10 +60,10 @@ export class AppService {
       blobName: blobName,
     }
 
-    if (storedPolicyName == null) {
-      sasOptions.startsOn = new Date()
-      sasOptions.expiresOn = new Date(new Date().valueOf() + 3600 * 1000)
-      sasOptions.permissions = BlobSASPermissions.parse('w')
+    if (!storedPolicyName) {
+      sasOptions.startsOn = dayjs().toDate()
+      sasOptions.expiresOn = dayjs().add(5, 'minutes').toDate()
+      sasOptions.permissions = BlobSASPermissions.parse(permissions)
     } else {
       sasOptions.identifier = storedPolicyName
     }
@@ -66,7 +72,6 @@ export class AppService {
       sasOptions,
       sharedKeyCredential,
     ).toString()
-    console.log(`SAS token for blob is: ${sasToken}`)
 
     return `${containerClient.getBlockBlobClient(blobName).url}?${sasToken}`
   }
