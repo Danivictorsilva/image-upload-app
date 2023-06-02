@@ -4,6 +4,7 @@ import {
   BlobSASSignatureValues,
   BlobServiceClient,
   ContainerClient,
+  ContainerSASPermissions,
   StorageSharedKeyCredential,
   generateBlobSASQueryParameters,
 } from '@azure/storage-blob'
@@ -12,7 +13,7 @@ import * as dayjs from 'dayjs'
 
 @Injectable()
 export class AppService {
-  generateSasToken() {
+  async generateSasToken() {
     const containerName = process.env.CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
@@ -23,22 +24,19 @@ export class AppService {
       accountKey,
     )
 
-    const containerClient = this.getContainerClient(
+    const sasUrl = await this.getContainerClient(
       sharedKeyCredential,
       containerName,
-    )
-
-    const sasUri = this.getBlobSasUri(
-      containerClient,
-      blobName,
-      sharedKeyCredential,
-      'w',
-    )
+    ).generateSasUrl({
+      expiresOn: dayjs().add(5, 'm').toDate(),
+      startsOn: dayjs().toDate(),
+      permissions: ContainerSASPermissions.parse('aw'),
+    })
 
     return {
       container: containerName,
       filename: blobName,
-      sasUri,
+      sasUrl,
     }
   }
 
@@ -59,7 +57,7 @@ export class AppService {
   moveBlobFromContainer(filename: string) {
     const successOnMove = false // TODO
 
-    if (successOnMove)
+    if (!successOnMove)
       return new BadRequestException('Could not move blob from temp container.')
   }
 
