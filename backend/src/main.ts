@@ -3,6 +3,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -10,6 +11,17 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   )
+
+  const config = new DocumentBuilder()
+    .setTitle('Image Upload Application API')
+    .setDescription(
+      'Fastify API from Web applicaton developed for testing an image upload architecture.',
+    )
+    .setVersion('1.0')
+    .build()
+  const document = SwaggerModule.createDocument(app, config)
+  SwaggerModule.setup('api/docs', app, document)
+
   await app.listen(process.env.API_PORT || 3000, '0.0.0.0')
 }
 bootstrap()

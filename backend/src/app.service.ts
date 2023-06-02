@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   BlobSASPermissions,
   BlobSASSignatureValues,
@@ -12,23 +12,21 @@ import * as dayjs from 'dayjs'
 
 @Injectable()
 export class AppService {
-  async generateSasToken() {
+  generateSasToken() {
     const containerName = process.env.CONTAINER_NAME
-    const blobName = this.generateBlobFilename()
-    const account = process.env.ACCOUNT_NAME
+    const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
+    const blobName = this.generateBlobFilename()
 
     const sharedKeyCredential = new StorageSharedKeyCredential(
-      account,
+      accountName,
       accountKey,
     )
 
-    const blobServiceClient = new BlobServiceClient(
-      `https://${account}.blob.core.windows.net`,
+    const containerClient = this.getContainerClient(
       sharedKeyCredential,
+      containerName,
     )
-
-    const containerClient = blobServiceClient.getContainerClient(containerName)
 
     const sasUri = this.getBlobSasUri(
       containerClient,
@@ -40,15 +38,34 @@ export class AppService {
     return {
       container: containerName,
       filename: blobName,
-      sasuri: sasUri,
+      sasUri,
     }
   }
 
-  private generateBlobFilename() {
-    return randomUUID()
+  confirmUpload(filename: string): Promise<boolean> {
+    const containerName = process.env.CONTAINER_NAME
+    const accountName = process.env.ACCOUNT_NAME
+    const accountKey = process.env.ACCOUNT_KEY
+    const sharedKeyCredential = new StorageSharedKeyCredential(
+      accountName,
+      accountKey,
+    )
+
+    return this.getContainerClient(sharedKeyCredential, containerName)
+      .getBlobClient(filename)
+      .exists()
   }
 
-  getBlobSasUri(
+  moveBlobFromContainer(filename: string) {
+    const successOnMove = false // TODO
+
+    if (successOnMove)
+      return new BadRequestException('Could not move blob from temp container.')
+  }
+
+  private generateBlobFilename = () => randomUUID()
+
+  private getBlobSasUri(
     containerClient: ContainerClient,
     blobName: string,
     sharedKeyCredential: StorageSharedKeyCredential,
@@ -74,5 +91,15 @@ export class AppService {
     ).toString()
 
     return `${containerClient.getBlockBlobClient(blobName).url}?${sasToken}`
+  }
+
+  private getContainerClient(
+    storageSharedKeyCredential: StorageSharedKeyCredential,
+    containerName,
+  ) {
+    return new BlobServiceClient(
+      `https://${storageSharedKeyCredential.accountName}.blob.core.windows.net`,
+      storageSharedKeyCredential,
+    ).getContainerClient(containerName)
   }
 }
