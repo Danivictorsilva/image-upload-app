@@ -36,15 +36,79 @@ $(document).ready(function () {
         const response = await request.json();
 
         // Create a new BlobServiceClient
-        const blobServiceClient = new BlobServiceClient(response.sasuri);
+        const blobServiceClient = new BlobServiceClient(
+          `${response.account}?${response.sas}`
+        );
 
-        const containerClient = blobServiceClient.getContainerClient(response.container);
+        const containerClient = blobServiceClient.getContainerClient(
+          response.container
+        );
 
-        const blobClient = containerClient.getBlockBlobClient(response.filename);
+        const blobClient = containerClient.getBlockBlobClient(
+          response.filename
+        );
 
+        function showProgress(valueProgress) {
+          const progressElement = $("#file-progress");
+
+          $(progressElement).attr("hidden", false);
+          $(progressElement).attr("value", valueProgress);
+
+          if (valueProgress == 100) {
+            progressConcluited();
+          }
+        }
+
+        function calculateProgress(progress, sizeFile) {
+          const progressMultiplicated = progress.loadedBytes * 100;
+          const valueProgress = progressMultiplicated / sizeFile;
+
+          showProgress(valueProgress);
+        }
+
+        /**
+         * @type {File}
+         */
         const archive = $("#picture__input")[0].files[0];
 
-        blobClient.uploadBrowserData(archive);
+        await blobClient.uploadBrowserData(archive, {
+          onProgress: (progress) => {
+            calculateProgress(progress, archive.size);
+          },
+          blobHTTPHeaders: {
+            blobContentType: archive.type,
+          },
+        });
+
+        function progressConcluited() {
+          const progressElement = $("#file-progress");
+          const uploadConcluited = $(".concluited-upload");
+
+          $(progressElement).attr("hidden", true);
+          $(uploadConcluited).attr("hidden", false);
+
+          confirmUpload();
+        }
+
+        function confirmUpload() {
+          const nameFile = response.filename;
+
+          const settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": "http://localhost:3000/api/upload/confirm",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "processData": false,
+            "data": JSON.stringify({ "filename": `${nameFile}`})
+          };
+          
+          $.ajax(settings).done(function (response) {
+            console.log(response);
+          });
+        }
 
       } catch (error) {
         console.log(error);

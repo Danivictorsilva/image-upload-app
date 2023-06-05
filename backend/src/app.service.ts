@@ -37,6 +37,8 @@ export class AppService {
       container: containerName,
       filename: blobName,
       sasUrl,
+      sas: sasUrl.split('?').at(1),
+      account: `https://${accountName}.blob.core.windows.net`,
     }
   }
 
