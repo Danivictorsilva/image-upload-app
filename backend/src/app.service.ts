@@ -14,7 +14,7 @@ import * as dayjs from 'dayjs'
 @Injectable()
 export class AppService {
   async generateSasToken() {
-    const tmpContainerName = process.env.CONTAINER_NAME
+    const tmpContainerName = process.env.TMP_CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
     const blobName = this.generateBlobFilename()
@@ -41,7 +41,7 @@ export class AppService {
   }
 
   confirmUpload(filename: string): Promise<boolean> {
-    const tmpContainerName = process.env.CONTAINER_NAME
+    const tmpContainerName = process.env.TMP_CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
     const sharedKeyCredential = new StorageSharedKeyCredential(
