@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import {
   BlobSASPermissions,
   BlobSASSignatureValues,
@@ -14,7 +14,7 @@ import * as dayjs from 'dayjs'
 @Injectable()
 export class AppService {
   async generateSasToken() {
-    const containerName = process.env.CONTAINER_NAME
+    const tmpContainerName = process.env.CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
     const blobName = this.generateBlobFilename()
@@ -26,22 +26,22 @@ export class AppService {
 
     const sasUrl = await this.getContainerClient(
       sharedKeyCredential,
-      containerName,
+      tmpContainerName,
     ).generateSasUrl({
       expiresOn: dayjs().add(5, 'm').toDate(),
       startsOn: dayjs().toDate(),
-      permissions: ContainerSASPermissions.parse('aw'),
+      permissions: ContainerSASPermissions.from({ add: true, write: true }),
     })
 
     return {
-      container: containerName,
+      container: tmpContainerName,
       filename: blobName,
       sasUrl,
     }
   }
 
   confirmUpload(filename: string): Promise<boolean> {
-    const containerName = process.env.CONTAINER_NAME
+    const tmpContainerName = process.env.CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
     const accountKey = process.env.ACCOUNT_KEY
     const sharedKeyCredential = new StorageSharedKeyCredential(
@@ -49,25 +49,67 @@ export class AppService {
       accountKey,
     )
 
-    return this.getContainerClient(sharedKeyCredential, containerName)
+    return this.getContainerClient(sharedKeyCredential, tmpContainerName)
       .getBlobClient(filename)
       .exists()
   }
 
-  moveBlobFromContainer(filename: string) {
-    const successOnMove = false // TODO
+  copyBlobFromContainer(filename: string) {
+    const privateContainerName = process.env.PRIVATE_CONTAINER_NAME
+    const tmpContainerName = process.env.TMP_CONTAINER_NAME
+    const accountName = process.env.ACCOUNT_NAME
+    const accountKey = process.env.ACCOUNT_KEY
 
-    if (!successOnMove)
-      return new BadRequestException('Could not move blob from temp container.')
+    const sharedKeyCredential = new StorageSharedKeyCredential(
+      accountName,
+      accountKey,
+    )
+
+    const containerClientForTmpFile = this.getContainerClient(
+      sharedKeyCredential,
+      tmpContainerName,
+    )
+
+    const uriForTmpFileWithSas = this.getBlobSasUri(
+      containerClientForTmpFile,
+      filename,
+      sharedKeyCredential,
+      BlobSASPermissions.from({ read: true }),
+    )
+
+    return this.getContainerClient(sharedKeyCredential, privateContainerName)
+      .getBlobClient(filename)
+      .syncCopyFromURL(uriForTmpFileWithSas)
   }
 
-  private generateBlobFilename = () => randomUUID()
+  getBlobView(filename: string) {
+    const privateContainerName = process.env.PRIVATE_CONTAINER_NAME
+    const accountName = process.env.ACCOUNT_NAME
+    const accountKey = process.env.ACCOUNT_KEY
+
+    const sharedKeyCredential = new StorageSharedKeyCredential(
+      accountName,
+      accountKey,
+    )
+
+    const containerClient = this.getContainerClient(
+      sharedKeyCredential,
+      privateContainerName,
+    )
+
+    return this.getBlobSasUri(
+      containerClient,
+      filename,
+      sharedKeyCredential,
+      BlobSASPermissions.from({ read: true }),
+    )
+  }
 
   private getBlobSasUri(
     containerClient: ContainerClient,
     blobName: string,
     sharedKeyCredential: StorageSharedKeyCredential,
-    permissions: string,
+    permissions: BlobSASPermissions,
     storedPolicyName?: string,
   ) {
     const sasOptions: BlobSASSignatureValues = {
@@ -78,7 +120,7 @@ export class AppService {
     if (!storedPolicyName) {
       sasOptions.startsOn = dayjs().toDate()
       sasOptions.expiresOn = dayjs().add(5, 'minutes').toDate()
-      sasOptions.permissions = BlobSASPermissions.parse(permissions)
+      sasOptions.permissions = permissions
     } else {
       sasOptions.identifier = storedPolicyName
     }
@@ -93,11 +135,13 @@ export class AppService {
 
   private getContainerClient(
     storageSharedKeyCredential: StorageSharedKeyCredential,
-    containerName,
+    tmpContainerName,
   ) {
     return new BlobServiceClient(
       `https://${storageSharedKeyCredential.accountName}.blob.core.windows.net`,
       storageSharedKeyCredential,
-    ).getContainerClient(containerName)
+    ).getContainerClient(tmpContainerName)
   }
+
+  private generateBlobFilename = () => randomUUID()
 }
