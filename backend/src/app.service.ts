@@ -137,12 +137,12 @@ export class AppService {
 
   private getContainerClient(
     storageSharedKeyCredential: StorageSharedKeyCredential,
-    tmpContainerName,
+    containerName,
   ) {
     return new BlobServiceClient(
       `https://${storageSharedKeyCredential.accountName}.blob.core.windows.net`,
       storageSharedKeyCredential,
-    ).getContainerClient(tmpContainerName)
+    ).getContainerClient(containerName)
   }
 
   private generateBlobFilename = () => randomUUID()

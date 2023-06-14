@@ -1,8 +1,8 @@
 {
-  "name": "backend",
-  "version": "0.0.1",
+  "name": "image-upload-app-backend",
+  "version": "1.0.0",
   "description": "",
-  "author": "",
+  "author": "Danivictorsilva",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
