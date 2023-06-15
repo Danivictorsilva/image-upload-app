@@ -1,5 +1,5 @@
 import { BlobServiceClient } from "@azure/storage-blob";
-
+import { requestHelper } from './requestHelper';
 
 $(document).ready(function () {
   const inputFile = $("#picture__input");
@@ -36,22 +36,11 @@ $(document).ready(function () {
 
 async function sendArchive() {
   try {
-    const request = await fetch(
-      `${import.meta.env.VITE_ORIGIN}${import.meta.env.VITE_GENERATE_SAS_TOKEN_ROUTE}`,
-      {
-        method: 'GET',
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-        },
-      });
-    const response = await request.json()
-    const url = new URL(response.sasUrl)
-    const [containerName, filename] = url.pathname.split('/').slice(1)
+    const { origin: domain, search: sasToken, pathname: path } = await requestHelper.getSasToken()
 
-    // Create a new BlobServiceClient
-    const blobServiceClient = new BlobServiceClient(
-      `${url.origin}${url.search}`
-    );
+    const blobServiceClient = new BlobServiceClient(`${domain}${sasToken}`);
+
+    const [containerName, filename] = path.split('/').slice(1)
 
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
@@ -94,7 +83,6 @@ function showProgress(valueProgress, filename) {
   }
 }
 
-
 function progressConcluited(filename) {
   const progressElement = $("#file-progress");
   const uploadConcluited = $(".concluited-upload");
@@ -102,25 +90,6 @@ function progressConcluited(filename) {
   $(progressElement).attr("hidden", true);
   $(uploadConcluited).attr("hidden", false);
 
-  confirmUpload(filename);
+  requestHelper.confirmUpload(filename);
 }
 
-function confirmUpload(filename) {
-  console.log('Here')
-
-  const settings = {
-    "async": true,
-    "crossDomain": true,
-    "url": `${import.meta.env.VITE_ORIGIN}${import.meta.env.VITE_CONFIRM_UPLOAD_ROUTE}`,
-    "method": "POST",
-    "headers": {
-      "Content-Type": "application/json"
-    },
-    "processData": false,
-    "data": JSON.stringify({ "filename": `${filename}` })
-  };
-
-  $.ajax(settings).done(function (response) {
-    console.log(response);
-  });
-}
