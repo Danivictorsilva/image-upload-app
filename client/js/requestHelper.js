@@ -15,36 +15,44 @@ class RequestHelper {
     }
 
     async getSasToken() {
-        console.log(this.base_url)
-        const generateSasResponse = await fetch(
-            `${this.base_url}${this.generate_sas_token_route}`,
-            {
-                method: 'GET',
-                headers: {
-                    "content-type": "application/x-www-form-urlencoded"
-                },
-            });
+        try {
+            const generateSasResponse = await fetch(
+                `${this.base_url}${this.generate_sas_token_route}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        "content-type": "application/x-www-form-urlencoded"
+                    },
+                });
 
-        const responseJson = await generateSasResponse.json()
+            const responseJson = await generateSasResponse.json()
+            console.log(responseJson)
 
-        return new URL(responseJson.sasUrl)
+            return new URL(responseJson.sasUrl)
+        } catch (error) {
+            console.error(error)
+        }
     }
 
-    confirmUpload(filename) {
-        const settings = {
-            "crossDomain": true,
-            "url": `${this.base_url}${this.confirm_upload_route}`,
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json",
-            },
-            "processData": false,
-            "data": JSON.stringify({ "filename": `${filename}` })
-        };
+    async confirmUpload(filename) {
+        try {
+            const confirmUploadResponse = await fetch(
+                `${this.base_url}${this.confirm_upload_route}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        "content-type": "application/x-www-form-urlencoded",
+                    },
+                    credentials: 'include',
+                    body: `filename=${filename}`
+                });
 
-        $.ajax(settings).done(function (response) {
-            console.log(response);
-        });
+            const responseJson = await confirmUploadResponse.json()
+            console.log(responseJson)
+
+        } catch (error) {
+            console.error(error)
+        }
     }
 }
 
