@@ -9,10 +9,10 @@ import {
   generateBlobSASQueryParameters,
 } from '@azure/storage-blob'
 import { randomUUID } from 'node:crypto'
-import * as dayjs from 'dayjs'
+import dayjs from 'dayjs'
 
 @Injectable()
-export class AppService {
+export class UploadService {
   async generateSasToken() {
     const tmpContainerName = process.env.TMP_CONTAINER_NAME
     const accountName = process.env.ACCOUNT_NAME
