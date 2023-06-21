@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { AzureStorageService } from '../azure/azure-storage.service'
+import { AzureStorageService } from '../../infra/azure/azure-storage.service'
 import SharpProcessor from './processors/SharpProcessor'
 
 @Injectable()
@@ -22,13 +22,21 @@ export class ProcessService {
   }
 
   async resize(filename: string) {
-    const LARGEST_SIDE_SIZE_IN_PX = 3500
+    const NEW_LARGEST_SIDE_SIZE_IN_PX = 3500
 
-    const blobClient = this.azureStorageService.blobServiceClient
+    const sourceBlobClient = this.azureStorageService.blobServiceClient
       .getContainerClient(this.tmpContainer)
       .getBlobClient(filename)
 
-    this.sharpProcessor.resize(LARGEST_SIDE_SIZE_IN_PX, blobClient, blobClient)
+    const destinationBlobClient = this.azureStorageService.blobServiceClient
+      .getContainerClient(this.tmpContainer)
+      .getBlockBlobClient(filename + '_resize_' + Date.now())
+
+    this.sharpProcessor.resize(
+      NEW_LARGEST_SIDE_SIZE_IN_PX,
+      sourceBlobClient,
+      destinationBlobClient,
+    )
   }
 
   async rotate(filename: string) {

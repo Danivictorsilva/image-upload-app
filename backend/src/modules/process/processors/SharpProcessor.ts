@@ -1,23 +1,25 @@
-import { BlobClient } from '@azure/storage-blob'
+import { BlobClient, BlockBlobClient } from '@azure/storage-blob'
 import IProcessor from '../contracts/IProcessor'
 import * as sharp from 'sharp'
 import { Injectable } from '@nestjs/common'
+import { resolve } from 'path'
+import * as fs from 'node:fs/promises'
 
 @Injectable()
 export default class SharpProcessor implements IProcessor {
   async resize(
     largestSideSize: number,
     sourceBlobClient: BlobClient,
-    destinationBlobClient: BlobClient,
+    destinationBlobClient: BlockBlobClient,
   ): Promise<void> {
-    const downloadBlockBlobResponse = await sourceBlobClient.download()
-    const downloaded = await this.streamToBuffer(
-      downloadBlockBlobResponse.readableStreamBody,
+    const blobDownloadResponseParsed = await sourceBlobClient.download()
+    const originalBuffer = await this.streamToBuffer(
+      blobDownloadResponseParsed.readableStreamBody,
     )
 
-    const biggerSide = await this.getBiggerSide(downloaded)
+    const biggerSide = await this.getLargestSide(originalBuffer)
 
-    const buffer = await sharp(downloaded)
+    const processedBuffer = await sharp(originalBuffer)
       .resize({
         [biggerSide]: largestSideSize,
       })
@@ -26,7 +28,10 @@ export default class SharpProcessor implements IProcessor {
         quality: 100,
       })
       .toBuffer()
+
+    destinationBlobClient.uploadData(processedBuffer)
   }
+
   rotate(
     degrees: number,
     sourceBlobClient: BlobClient,
@@ -48,7 +53,7 @@ export default class SharpProcessor implements IProcessor {
     })
   }
 
-  private async getBiggerSide(filepath) {
+  private async getLargestSide(filepath) {
     const { height, width } = await sharp(filepath).metadata()
     return height > width ? `height` : `width`
   }

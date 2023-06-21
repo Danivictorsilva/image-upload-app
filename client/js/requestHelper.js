@@ -23,6 +23,7 @@ class RequestHelper {
                     headers: {
                         "content-type": "application/x-www-form-urlencoded"
                     },
+                    credentials: "include"
                 });
 
             const responseJson = await generateSasResponse.json()
