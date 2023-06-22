@@ -12,7 +12,7 @@ export default class SharpProcessor implements IProcessor {
 
     const largestSide = await this.getLargestSide(buffer)
 
-    return await sharp(buffer)
+    return sharp(buffer)
       .resize({
         [largestSide]: largestSideSize,
       })
@@ -22,11 +22,18 @@ export default class SharpProcessor implements IProcessor {
       .toBuffer()
   }
 
-  rotate(
+  async rotate(
     readableStream: NodeJS.ReadableStream,
     angle: number,
   ): Promise<Buffer> {
-    throw new Error('Method not implemented.')
+    const buffer = await this.streamToBuffer(readableStream)
+
+    return sharp(buffer)
+      .rotate(angle)
+      .jpeg({
+        quality: 100,
+      })
+      .toBuffer()
   }
 
   private async streamToBuffer(

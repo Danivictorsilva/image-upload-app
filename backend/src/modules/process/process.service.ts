@@ -21,33 +21,73 @@ export class ProcessService {
     )
   }
 
-  async resize(filename: string) {
-    const NEW_LARGEST_SIDE_SIZE_IN_PX = 3500
+  async resize(filename: string, newLargestSideSizeInPx = 3500) {
     const [name, extension] = filename.split('.')
+    const newFilename = extension
+      ? `${name}_resize.${extension}`
+      : `${name}_resize`
 
     const sourceBlobClient = this.azureStorageService.blobServiceClient
       .getContainerClient(this.tmpContainer)
       .getBlobClient(filename)
 
     const destinationBlobClient = this.azureStorageService.blobServiceClient
-      .getContainerClient(this.tmpContainer)
-      .getBlockBlobClient(`${name}_resize_${Date.now()}.${extension}`)
+      .getContainerClient(this.privateContainer)
+      .getBlockBlobClient(newFilename)
 
     const blobDownloadResponseParsed = await sourceBlobClient.download()
 
+    const start = Date.now()
+
     const processedBuffer = await this.sharpProcessor.resize(
       blobDownloadResponseParsed.readableStreamBody,
-      NEW_LARGEST_SIDE_SIZE_IN_PX,
+      newLargestSideSizeInPx,
     )
 
+    const processTime = Date.now() - start
+
     await destinationBlobClient.uploadData(processedBuffer)
+
+    const uploadTime = Date.now() - start
+
+    return {
+      processTime,
+      uploadTime,
+    }
   }
 
-  async rotate(filename: string) {
-    // const ROTATE_ANGLE_IN_DEGREE = 90
-    // const blobClient = this.azureStorageService.blobServiceClient
-    //   .getContainerClient(this.tmpContainer)
-    //   .getBlobClient(filename)
-    // this.sharpProcessor.rotate(ROTATE_ANGLE_IN_DEGREE)
+  async rotate(filename: string, angle = 90) {
+    const [name, extension] = filename.split('.')
+    const newFilename = extension
+      ? `${name}_rotate.${extension}`
+      : `${name}_rotate`
+
+    const sourceBlobClient = this.azureStorageService.blobServiceClient
+      .getContainerClient(this.tmpContainer)
+      .getBlobClient(filename)
+
+    const destinationBlobClient = this.azureStorageService.blobServiceClient
+      .getContainerClient(this.privateContainer)
+      .getBlockBlobClient(newFilename)
+
+    const blobDownloadResponseParsed = await sourceBlobClient.download()
+
+    const start = Date.now()
+
+    const processedBuffer = await this.sharpProcessor.rotate(
+      blobDownloadResponseParsed.readableStreamBody,
+      angle,
+    )
+
+    const processTime = Date.now() - start
+
+    await destinationBlobClient.uploadData(processedBuffer)
+
+    const uploadTime = Date.now() - start
+
+    return {
+      processTime,
+      uploadTime,
+    }
   }
 }
