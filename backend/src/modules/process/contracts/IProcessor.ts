@@ -1,15 +1,11 @@
-import { BlobClient, BlockBlobClient } from '@azure/storage-blob'
-
 export default interface IProcessor {
   resize(
+    readableStream: NodeJS.ReadableStream,
     largestSideSize: number,
-    sourceBlobClient: BlobClient,
-    destinationBlobClient: BlockBlobClient,
-  ): Promise<void>
+  ): Promise<Buffer | Blob | ArrayBuffer | ArrayBufferView>
 
   rotate(
-    degrees: number,
-    sourceBlobClient: BlobClient,
-    destinationBlobClient: BlockBlobClient,
-  ): Promise<void>
+    readableStream: NodeJS.ReadableStream,
+    angle: number,
+  ): Promise<Buffer | Blob | ArrayBuffer | ArrayBufferView>
 }

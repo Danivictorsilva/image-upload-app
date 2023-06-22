@@ -1,46 +1,37 @@
-import { BlobClient, BlockBlobClient } from '@azure/storage-blob'
 import IProcessor from '../contracts/IProcessor'
 import * as sharp from 'sharp'
 import { Injectable } from '@nestjs/common'
-import { resolve } from 'path'
-import * as fs from 'node:fs/promises'
 
 @Injectable()
 export default class SharpProcessor implements IProcessor {
   async resize(
+    readableStream: NodeJS.ReadableStream,
     largestSideSize: number,
-    sourceBlobClient: BlobClient,
-    destinationBlobClient: BlockBlobClient,
-  ): Promise<void> {
-    const blobDownloadResponseParsed = await sourceBlobClient.download()
-    const originalBuffer = await this.streamToBuffer(
-      blobDownloadResponseParsed.readableStreamBody,
-    )
+  ): Promise<Buffer> {
+    const buffer = await this.streamToBuffer(readableStream)
 
-    const biggerSide = await this.getLargestSide(originalBuffer)
+    const largestSide = await this.getLargestSide(buffer)
 
-    const processedBuffer = await sharp(originalBuffer)
+    return await sharp(buffer)
       .resize({
-        [biggerSide]: largestSideSize,
+        [largestSide]: largestSideSize,
       })
       .jpeg({
-        force: true,
         quality: 100,
       })
       .toBuffer()
-
-    destinationBlobClient.uploadData(processedBuffer)
   }
 
   rotate(
-    degrees: number,
-    sourceBlobClient: BlobClient,
-    destinationBlobClient: BlobClient,
-  ): Promise<void> {
+    readableStream: NodeJS.ReadableStream,
+    angle: number,
+  ): Promise<Buffer> {
     throw new Error('Method not implemented.')
   }
 
-  private async streamToBuffer(readableStream): Promise<Buffer> {
+  private async streamToBuffer(
+    readableStream: NodeJS.ReadableStream,
+  ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const chunks = []
       readableStream.on('data', (data) => {
@@ -53,7 +44,7 @@ export default class SharpProcessor implements IProcessor {
     })
   }
 
-  private async getLargestSide(filepath) {
+  private async getLargestSide(filepath: Buffer) {
     const { height, width } = await sharp(filepath).metadata()
     return height > width ? `height` : `width`
   }

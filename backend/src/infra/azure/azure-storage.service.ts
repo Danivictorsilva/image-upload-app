@@ -16,7 +16,7 @@ export class AzureStorageService {
   blobServiceClient: BlobServiceClient
 
   constructor(private readonly configService: ConfigService) {
-    const accountName = this.configService.get<string>(
+    const accountName = this.configService.getOrThrow<string>(
       'azure_storage.account_name',
     )
     const accountKey = this.configService.getOrThrow<string>(
@@ -46,12 +46,6 @@ export class AzureStorageService {
       .generateSasUrl(options)
   }
 
-  /**
-   * @param {string} sourceContainerName
-   * @param {string} sourceFileName
-   * @param {string} destinationContainerName
-   * @param {string} destinationFileName
-   */
   async moveFile(
     sourceContainerName: string,
     sourceFileName: string,
