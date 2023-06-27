@@ -1,95 +1,93 @@
-import { BlobServiceClient } from "@azure/storage-blob";
-import { requestHelper } from './requestHelper';
+import { BlobServiceClient } from "@azure/storage-blob"
+import { requestHelper } from './requestHelper'
 
 $(document).ready(function () {
-  const inputFile = $("#picture__input");
-  const pictureImage = $(".picture__image");
-  const pictureImageTxt = "Anexar uma arquivo";
-  $(pictureImage).attr("innerHTML", pictureImageTxt);
+  const inputFile = $("#picture__input")
+  const pictureImage = $(".picture__image")
+  const pictureImageTxt = "Anexar uma arquivo"
+  $(pictureImage).attr("innerHTML", pictureImageTxt)
 
   inputFile.on("change", function (e) {
-    const inputTarget = e.target;
-    const file = inputTarget.files[0];
+    const inputTarget = e.target
+    const file = inputTarget.files[0]
 
     if (file) {
-      const reader = new FileReader();
+      const reader = new FileReader()
 
       $(reader).on("load", function (event) {
-        const readerTarget = event.target;
+        const readerTarget = event.target
 
-        const img = $("<img></img>");
-        $(img).attr("src", readerTarget.result);
-        img.addClass("picture__img");
+        const img = $("<img></img>")
+        $(img).attr("src", readerTarget.result)
+        img.addClass("picture__img")
 
-        $(pictureImage).html("");
-        $(pictureImage).append(img);
-      });
+        $(pictureImage).html("")
+        $(pictureImage).append(img)
+      })
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file)
     } else {
-      $(pictureImage).attr("innerHTML", pictureImageTxt);
+      $(pictureImage).attr("innerHTML", pictureImageTxt)
     }
 
-    $(".btn-send-file").on("click", sendArchive);
-  });
-});
+    $(".btn-send-file").on("click", sendFile)
+  })
+})
 
-async function sendArchive() {
+async function sendFile() {
   try {
-    const { origin: domain, search: sasToken, pathname: path } = await requestHelper.getSasToken()
-
-    const blobServiceClient = new BlobServiceClient(`${domain}${sasToken}`);
-
-    const [containerName, filename] = path.split('/').slice(1)
-
-    const containerClient = blobServiceClient.getContainerClient(containerName);
-
-    const blobClient = containerClient.getBlockBlobClient(filename);
-
     /**
      * @type {File}
      */
-    const archive = $("#picture__input")[0].files[0];
+    const file = $("#picture__input")[0].files[0]
 
-    await blobClient.uploadBrowserData(archive, {
+    const { origin: domain, search: sasToken, pathname: path } = await requestHelper.getSasToken()
+
+    const [containerName, filename] = path.split('/').slice(1)
+
+    const blobClient = new BlobServiceClient(`${domain}${sasToken}`)
+      .getContainerClient(containerName)
+      .getBlockBlobClient(filename)
+
+    await blobClient.uploadData(file, {
       onProgress: (progress) => {
-        calculateProgress(progress, archive.size, filename);
+        calculateProgress(progress, file.size, filename)
       },
       blobHTTPHeaders: {
-        blobContentType: archive.type,
+        blobContentType: file.type,
       },
-    });
+    })
   } catch (error) {
-    console.log(error);
+    console.log(error)
   }
 }
 
 
 function calculateProgress(progress, sizeFile, filename) {
-  const progressMultiplicated = progress.loadedBytes * 100;
-  const valueProgress = progressMultiplicated / sizeFile;
+  const progressMultiplicated = progress.loadedBytes * 100
+  const valueProgress = progressMultiplicated / sizeFile
 
-  showProgress(valueProgress, filename);
+  showProgress(valueProgress, filename)
 }
 
 function showProgress(valueProgress, filename) {
-  const progressElement = $("#file-progress");
+  const progressElement = $("#file-progress")
 
-  $(progressElement).attr("hidden", false);
-  $(progressElement).attr("value", valueProgress);
+  $(progressElement).attr("hidden", false)
+  $(progressElement).attr("value", valueProgress)
 
   if (valueProgress == 100) {
-    progressConcluited(filename);
+    progressConcluded(filename)
   }
 }
 
-function progressConcluited(filename) {
-  const progressElement = $("#file-progress");
-  const uploadConcluited = $(".concluited-upload");
+function progressConcluded(filename) {
+  const progressElement = $("#file-progress")
+  const uploadConcluited = $(".concluited-upload")
 
-  $(progressElement).attr("hidden", true);
-  $(uploadConcluited).attr("hidden", false);
+  $(progressElement).attr("hidden", true)
+  $(uploadConcluited).attr("hidden", false)
 
-  requestHelper.confirmUpload(filename);
+  requestHelper.confirmUpload(filename)
 }
 

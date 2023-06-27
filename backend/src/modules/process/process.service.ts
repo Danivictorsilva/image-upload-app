@@ -37,22 +37,22 @@ export class ProcessService {
 
     const blobDownloadResponseParsed = await sourceBlobClient.download()
 
-    const start = Date.now()
+    const t0 = Date.now()
 
     const processedBuffer = await this.sharpProcessor.resize(
       blobDownloadResponseParsed.readableStreamBody,
       newLargestSideSizeInPx,
     )
 
-    const processTime = Date.now() - start
+    const t1 = Date.now()
 
     await destinationBlobClient.uploadData(processedBuffer)
 
-    const uploadTime = Date.now() - start
+    const t2 = Date.now()
 
     return {
-      processTime,
-      uploadTime,
+      processTime: t1 - t0,
+      uploadTime: t2 - t1,
     }
   }
 
@@ -72,22 +72,22 @@ export class ProcessService {
 
     const blobDownloadResponseParsed = await sourceBlobClient.download()
 
-    const start = Date.now()
+    const t0 = Date.now()
 
     const processedBuffer = await this.sharpProcessor.rotate(
       blobDownloadResponseParsed.readableStreamBody,
       angle,
     )
 
-    const processTime = Date.now() - start
+    const t1 = Date.now()
 
     await destinationBlobClient.uploadData(processedBuffer)
 
-    const uploadTime = Date.now() - start
+    const t2 = Date.now()
 
     return {
-      processTime,
-      uploadTime,
+      processTime: t1 - t0,
+      uploadTime: t2 - t1,
     }
   }
 }

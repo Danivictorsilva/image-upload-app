@@ -4,10 +4,7 @@ import { Injectable } from '@nestjs/common'
 
 @Injectable()
 export default class SharpProcessor implements IProcessor {
-  async resize(
-    readableStream: NodeJS.ReadableStream,
-    largestSideSize: number,
-  ): Promise<Buffer> {
+  async resize(readableStream: NodeJS.ReadableStream, largestSideSize: number) {
     const buffer = await this.streamToBuffer(readableStream)
 
     const largestSide = await this.getLargestSide(buffer)
@@ -22,18 +19,10 @@ export default class SharpProcessor implements IProcessor {
       .toBuffer()
   }
 
-  async rotate(
-    readableStream: NodeJS.ReadableStream,
-    angle: number,
-  ): Promise<Buffer> {
+  async rotate(readableStream: NodeJS.ReadableStream, angle: number) {
     const buffer = await this.streamToBuffer(readableStream)
 
-    return sharp(buffer)
-      .rotate(angle)
-      .jpeg({
-        quality: 100,
-      })
-      .toBuffer()
+    return sharp(buffer).rotate(angle).toBuffer()
   }
 
   private async streamToBuffer(

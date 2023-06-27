@@ -32,11 +32,19 @@ export class ProcessController {
   async resize(
     @Body() { filename, new_largest_side_size_in_px }: ResizeRequestPayload,
   ) {
-    return this.processService.resize(filename, new_largest_side_size_in_px)
+    try {
+      return this.processService.resize(filename, new_largest_side_size_in_px)
+    } catch (error) {
+      throw error
+    }
   }
 
   @Post('/rotate')
   async rotate(@Body() { filename, angle }: RotateRequestPayload) {
-    return this.processService.rotate(filename, angle)
+    try {
+      return this.processService.rotate(filename, angle)
+    } catch (error) {
+      throw error
+    }
   }
 }
